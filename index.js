@@ -1,20 +1,104 @@
 /*
  * @Author: Murphy
  * @Date: 2021-07-14 19:50:09
- * @LastEditTime: 2021-07-14 20:50:59
+ * @LastEditTime: 2021-07-15 10:04:52
  */
-// const Person = require("./person");
+const http = require("http");
+const path = require("path");
+const fs = require("fs");
 
-// const person1 = new Person("qi", 24);
+const server = http.createServer((req, res) => {
+  //   //index page
+  //   if (req.url === "/") {
+  //     fs.readFile(
+  //       path.join(__dirname, "public", "index.html"),
+  //       (err, content) => {
+  //         if (err) throw err;
+  //         res.writeHead(200, { "Content-Type": "text/html" });
+  //         res.end(content);
+  //       }
+  //     );
+  //   }
+  // if (req.url === "/about") {
+  //   fs.readFile(
+  //     path.join(__dirname, "public", "about.html"),
+  //     (err, content) => {
+  //       if (err) throw err;
+  //       res.writeHead(200, { "Content-Type": "text/html" });
+  //       res.end(content);
+  //     }
+  //   );
+  // }
+  //   if (req.url === "/api/users") {
+  //     const users = [
+  //       {
+  //         name: "qi",
+  //         age: 100,
+  //       },
+  //       {
+  //         name: "qwqwi",
+  //         age: 100,
+  //       },
+  //     ];
+  //     res.writeHead(200, { "Content-Type": "application/json" });
+  //     res.end(JSON.stringify(users));
+  //   }
 
-// person1.greeting();
+  let filePath = path.join(
+    __dirname,
+    "public",
+    req.url === "/" ? "index.html" : req.url
+  );
+  // console.log(filePath);
+  // res.end();
+  let extname = path.extname(filePath);
 
-const Logger = require("./logger");
+  //initial content type;
+  let contentType = "text/html";
 
-const logger = new Logger();
+  //check ext and set content type;
+  switch (extname) {
+    case ".js":
+      contentType = "text/javascript";
+      break;
+    case ".css":
+      contentType = "text/css";
+      break;
+    case ".json":
+      contentType = "application/json";
+      break;
+    case ".png":
+      contentType = "image/png";
+      break;
+    case ".jpg":
+      contentType = "image/jpg";
+      break;
+  }
 
-logger.on("message", (data) => {
-  console.log(`called listener`, data);
+  //read filePath
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      if (err.code == "ENOENT") {
+        // console.log("page not found");
+        fs.readFile(
+          path.join(__dirname, "public", "404.html"),
+          (err, content) => {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end(content, "utf-8");
+          }
+        );
+      } else {
+        //some server errors
+        res.writeHead(500);
+        res.end(`Server Error: ${err.code}`);
+      }
+    } else {
+      //success
+      res.writeHead(200, { "Content-Type": contentType });
+      res.end(content, "utf-8");
+    }
+  });
 });
 
-logger.log("hello man");
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`server running on port: ${PORT}`));
